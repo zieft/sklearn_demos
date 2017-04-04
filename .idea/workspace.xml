@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="ea132d1d-2845-4e49-a1d3-cd5c60a3abd6" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Decision_trees/Udacity/classifyDT.py" afterPath="$PROJECT_DIR$/Decision_trees/Udacity/classifyDT.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Decision_trees/Udacity/sMain.py" afterPath="$PROJECT_DIR$/Decision_trees/Udacity/sMain.py" />
-    </list>
+    <list default="true" id="ea132d1d-2845-4e49-a1d3-cd5c60a3abd6" name="Default" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
