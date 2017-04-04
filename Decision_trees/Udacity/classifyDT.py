@@ -1,8 +1,15 @@
-def classify(features_train, labels_train):
+from sklearn import tree
+
+def classify_2(features_train, labels_train):
     ### your code goes here--should return a trained decision tree classifer
-    from sklearn import tree
     clf = tree.DecisionTreeClassifier()
     clf.fit(features_train, labels_train)
 
+
+    return clf
+
+def classify_50(features_train, labels_train):
+    clf = tree.DecisionTreeClassifier(min_samples_split=50)
+    clf.fit(features_train, labels_train)
 
     return clf
