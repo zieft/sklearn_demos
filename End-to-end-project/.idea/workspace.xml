@@ -15,22 +15,15 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="End-to-end-project.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="End-to-end-project.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/End-to-end-project.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="236">
-              <caret line="86" column="0" lean-forward="false" selection-start-line="86" selection-start-column="0" selection-end-line="89" selection-end-column="0" />
+            <state relative-caret-position="364">
+              <caret line="127" column="68" lean-forward="false" selection-start-line="127" selection-start-column="68" selection-end-line="127" selection-end-column="68" />
               <folding>
                 <element signature="e#38#103#0" expanded="true" />
               </folding>
             </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="attribute_histogram_plots.png" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/images/attribute_histogram_plots.png">
-          <provider selected="true" editor-type-id="images">
-            <state />
           </provider>
         </entry>
       </file>
@@ -326,19 +319,19 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/images/attribute_histogram_plots.png">
+      <provider selected="true" editor-type-id="images">
+        <state />
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/End-to-end-project.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="236">
-          <caret line="86" column="0" lean-forward="false" selection-start-line="86" selection-start-column="0" selection-end-line="89" selection-end-column="0" />
+        <state relative-caret-position="364">
+          <caret line="127" column="68" lean-forward="false" selection-start-line="127" selection-start-column="68" selection-end-line="127" selection-end-column="68" />
           <folding>
             <element signature="e#38#103#0" expanded="true" />
           </folding>
         </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/images/attribute_histogram_plots.png">
-      <provider selected="true" editor-type-id="images">
-        <state />
       </provider>
     </entry>
   </component>

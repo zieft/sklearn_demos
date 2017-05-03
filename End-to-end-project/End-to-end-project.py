@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import tarfile
 from six.moves import urllib
 import pandas as pd
+import hashlib
 
 rnd.seed(42)  # to make this notebook's output stable across runs
 
@@ -93,4 +94,43 @@ save_fig('attribute_histogram_plots')
 
 
 def split_train_test(data, test_ratio):
+    """
+    Split dataset into two parts. One for testing and the other for training.
+    :param data: the pandas DataFrame
+    :param test_ratio: The ratio that the size of test set over the whole dataset.
+    :return: Purely integer-location based indexing for selection by position.
+    """
     shuffled_indices = rnd.permutation(len(data))
+    test_set_size = int(len(data) * test_ratio)
+    test_indices = shuffled_indices[:test_set_size]
+    train_indices = shuffled_indices[test_set_size:]
+    return data.iloc[train_indices], data.iloc[test_indices]
+
+
+train_set, test_set = split_train_test(housing, 0.2)
+
+
+# print(len(train_set), len(test_set))
+
+def test_set_check(identifier, test_ratio, hash):
+    """
+    ????????????????????????????????????????????????????????????????
+    :param identifier: 
+    :param test_ratio: 
+    :param hash: 
+    :return: 
+    """
+    return bytearray(hash(np.int64(identifier)).digest())[-1] < 256 * test_ratio
+
+
+def split_train_test_by_id(data, test_ratio, hash=hashlib.md5):
+    """
+    ????????????????????????????????????????????????????????????????
+    :param data: 
+    :param test_ratio: 
+    :param hash: 
+    :return: 
+    """
+    ids = data[id_column]
+    in_test_set = ids.apply(lambda id_: test_set_check(id_, test_ratio, hash))
+    return data.loc[~n_test_set], data.loc[in_test_set]
