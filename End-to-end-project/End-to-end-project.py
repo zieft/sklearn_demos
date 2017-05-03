@@ -12,6 +12,7 @@ import tarfile
 from six.moves import urllib
 import pandas as pd
 import hashlib
+import sklearn.model_selection
 
 rnd.seed(42)  # to make this notebook's output stable across runs
 
@@ -84,7 +85,8 @@ Use lines below to see the overview of this dataset.
 # housing.head()
 # housing.info()
 # housing['ocean_proximity'].value_counts()
-# print(housing.describe())  # Generate various summary statistics, excluding NaN values.
+# print(housing.describe())  # Generate various summary statistics,
+# excluding NaN values.
 
 housing.hist(bins=50, figsize=(11, 8))
 save_fig('attribute_histogram_plots')
@@ -100,21 +102,24 @@ def split_train_test(data, test_ratio):
     :param test_ratio: The ratio that the size of test set over the whole dataset.
     :return: Purely integer-location based indexing for selection by position.
     """
-    shuffled_indices = rnd.permutation(len(data))
+    shuffled_indices = rnd.permutation(len(data))  # always generates the
+    # same shuffled indices.
     test_set_size = int(len(data) * test_ratio)
     test_indices = shuffled_indices[:test_set_size]
     train_indices = shuffled_indices[test_set_size:]
     return data.iloc[train_indices], data.iloc[test_indices]
 
 
-train_set, test_set = split_train_test(housing, 0.2)
+train_set_1, test_set_1 = split_train_test(housing, 0.2)
+print(len(train_set_1), len(test_set_1))
 
-
-# print(len(train_set), len(test_set))
 
 def test_set_check(identifier, test_ratio, hash):
     """
     ????????????????????????????????????????????????????????????????
+    compute a hash of each instance’s identifier, keep only the last byte 
+    of the hash, and put the instance in the test set if this value is lower
+    or equal to 51 (~20% of 256).
     :param identifier: 
     :param test_ratio: 
     :param hash: 
@@ -123,14 +128,63 @@ def test_set_check(identifier, test_ratio, hash):
     return bytearray(hash(np.int64(identifier)).digest())[-1] < 256 * test_ratio
 
 
-def split_train_test_by_id(data, test_ratio, hash=hashlib.md5):
+def split_train_test_by_id(data, test_ratio, id_column, hash=hashlib.md5):
     """
     ????????????????????????????????????????????????????????????????
+    This ensures that the test set will remain consistent across multiple runs, 
+    even if you refresh the dataset. The new test set will contain 20% of the 
+    new instances, but it will not contain any instance that was previously in 
+    the training set.
     :param data: 
     :param test_ratio: 
-    :param hash: 
+    :param hash: 'index'
     :return: 
     """
     ids = data[id_column]
     in_test_set = ids.apply(lambda id_: test_set_check(id_, test_ratio, hash))
-    return data.loc[~n_test_set], data.loc[in_test_set]
+    return data.loc[~in_test_set], data.loc[in_test_set]  # 按位取反运算
+
+
+# the housing dataset does not have an identifier column.
+# The simplest solution is to use the row index as the ID
+housing_with_id = housing.reset_index()  # adds an 'index' column
+train_set_2, test_set_2 = split_train_test_by_id(housing_with_id, 0.2, 'index')
+test_set_2.head()
+
+# train_test_split() from sklearn do exactly the same thing.
+train_set, test_set = sklearn.model_selection.train_test_split \
+    (housing, test_size=0.2, random_state=42)  # 42??
+
+test_set.head()
+
+# an experts who said that the median income is a very important attribute
+# to predict median housing prices. Let's see
+housing["median_income"].hist()
+
+housing["income_cat"] = np.ceil(housing['median_income'] / 1.5)
+housing["income_cat"].where(housing['income_cat'] < 5, 5.0, inplace=True)
+housing["income_cat"].value_counts()
+
+
+split = sklearn.model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
+for train_index, test_index in split.split(housing, housing["income_cat"]):
+    strat_train_set = housing.loc[train_index]
+    strat_test_set = housing.loc[test_index]
+
+def income_cat_proportions(data):
+    return data["income_cat"].value_counts() / len(data)
+
+train_set, test_set = sklearn.model_selection.train_test_split(housing, test_size=0.2, random_state=42)
+
+compare_props = pd.DataFrame({
+    "Overall": income_cat_proportions(housing),
+    "Stratified": income_cat_proportions(strat_test_set),
+    "Random": income_cat_proportions(test_set),
+}).sort_index()
+compare_props["Rand. %error"] = 100 * compare_props["Random"] / compare_props["Overall"] - 100
+compare_props["Strat. %error"] = 100 * compare_props["Stratified"] / compare_props["Overall"] - 100
+print(compare_props)
+
+for set in (strat_train_set, strat_test_set):
+    set.drop("income_cat", axis=1, inplace=True)
+
