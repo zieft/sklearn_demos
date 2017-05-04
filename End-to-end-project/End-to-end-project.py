@@ -13,6 +13,7 @@ from six.moves import urllib
 import pandas as pd
 import hashlib
 import sklearn.model_selection
+import matplotlib.image as mpimg
 
 rnd.seed(42)  # to make this notebook's output stable across runs
 
@@ -161,18 +162,23 @@ test_set.head()
 # to predict median housing prices. Let's see
 housing["median_income"].hist()
 
-housing["income_cat"] = np.ceil(housing['median_income'] / 1.5)
+housing["income_cat"] = np.ceil(housing['median_income'] / 1.5)  # /1.5 to limit
+# the number of income categories, ceil to round up to have discrete categories
 housing["income_cat"].where(housing['income_cat'] < 5, 5.0, inplace=True)
 housing["income_cat"].value_counts()
 
-
+# Stratified ShuffleSplit cross-validator
+# Provides train/test indices to split data in train/test sets.
+# stratified sampling based on the income category
 split = sklearn.model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 for train_index, test_index in split.split(housing, housing["income_cat"]):
-    strat_train_set = housing.loc[train_index]
+    strat_train_set = housing.loc[train_index]  # loc: Purely label-location based indexer for selection by label.
     strat_test_set = housing.loc[test_index]
+
 
 def income_cat_proportions(data):
     return data["income_cat"].value_counts() / len(data)
+
 
 train_set, test_set = sklearn.model_selection.train_test_split(housing, test_size=0.2, random_state=42)
 
@@ -185,6 +191,54 @@ compare_props["Rand. %error"] = 100 * compare_props["Random"] / compare_props["O
 compare_props["Strat. %error"] = 100 * compare_props["Stratified"] / compare_props["Overall"] - 100
 print(compare_props)
 
+# remove the income_cat attribute so the data is back to its original state
 for set in (strat_train_set, strat_test_set):
     set.drop("income_cat", axis=1, inplace=True)
 
+# Discover and visualize the data to gain insights
+# bad visualization
+housing = strat_train_set.copy()
+housing.plot(kind="scatter", x='longitude', y='latitude')
+save_fig('bad_visualization_plot')
+
+# better visualization with transparent effect
+housing.plot(kind='scatter', x='longitude', y='latitude', alpha=0.1)  # alpha = transparent
+save_fig("better_visualization_plot")
+
+# add house price, populations into plot and using different colors.
+housing.plot(kind='scatter', x="longitude", y="latitude",
+             s=housing['population'] / 100, label='population',
+             c="median_house_value", cmap=plt.get_cmap('jet'),
+             colorbar=True, alpha=0.4, figsize=(10, 7),
+             )
+"""
+DataFrame plotting accessor and method (housing.plot())
+The radius of each circle represents the district’s population (option s), 
+and the color represents the price (option c). We will use a predefined color 
+map (option cmap) called jet, which ranges from blue (low values) to red 
+(high prices).
+"""
+plt.legend()  # Places a legend on the axes.
+save_fig("housing_prices_scatterplot")
+
+# add map as background
+california_img = mpimg.imread(PROJECT_ROOT_DIR + '/images/california.png')
+ax = housing.plot(kind='scatter', x="longitude", y="latitude",
+                  s=housing['population'] / 100, label='population',
+                  c="median_house_value", cmap=plt.get_cmap('jet'),
+                  colorbar=True, alpha=0.4, figsize=(10, 7),
+                  )
+plt.imshow(california_img, extent=[-124.55, -113.80, 32.45, 42.05], alpha=0.5)
+plt.ylabel("Latitude", fontsize=14)
+plt.xlabel("Longitude", fontsize=14)
+
+prices = housing["median_house_value"]
+tick_values = np.linspace(prices.min(), prices.max(), 11)
+cbar = plt.colorbar()
+cbar.ax.set_yticklabels(["$%dk"%(round(v/1000)) for v in tick_values], fontsize=14)
+cbar.set_label('Median House Value', fontsize=16)
+
+plt.legend(fontsize=16)
+save_fig("california_housing_prices_plot")
+
+#
