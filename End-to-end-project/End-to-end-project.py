@@ -327,4 +327,18 @@ housing_cat_encoded = encoder.fit_transform(housing_cat)
 print(housing_cat_encoded)
 # compare with below
 print(housing_cat)
+print(encoder.classes_)
+
+# OneHotEncoding s. 92
+encoder = sklearn.preprocessing.OneHotEncoder()
+housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1, 1))
+print(housing_cat_1hot)  # this is a sparse matrix
+print(housing_cat_1hot.toarray())  # convert that matrix into a 2D-array
+
+
+# LabelEncoding and OneHotEncoding can be applied at the same time by using LabelBinarizer
+encoder = sklearn.preprocessing.LabelBinarizer()
+housing_cat_1hot_2=encoder.fit_transform(housing_cat)
+print(housing_cat_1hot_2)  # But this is already in 2D-array.
+
 
