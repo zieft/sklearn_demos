@@ -12,7 +12,7 @@ import tarfile
 from six.moves import urllib
 import pandas as pd
 import hashlib
-import sklearn.model_selection
+import sklearn
 import matplotlib.image as mpimg
 import pandas.tools.plotting
 
@@ -279,5 +279,52 @@ save_fig('rooms_per_household')
 
 housing.describe()
 
-
 # Prepare the data for Machine Learning algorithms
+housing = strat_train_set.drop("median_house_value", axis=1)
+housing_labels = strat_train_set["median_house_value"].copy()
+
+housing_copy = housing.copy().iloc[21:24]
+print(housing_copy)
+
+# methods to deal with the missing values.
+# option 1
+
+housing_copy.dropna(subset=["total_bedrooms"], how='any')
+
+# option 2
+housing_copy = housing.copy().iloc[21:24]
+print(housing_copy.drop("total_bedrooms", axis=1))
+
+# option 3
+# Set the values to some value (zero, the mean, the median, etc)
+housing_copy = housing.copy().iloc[21:24]
+median = housing_copy["total_bedrooms"].median()
+housing_copy["total_bedrooms"].fillna(median, inplace=True)
+print(housing_copy)
+
+# use sklearn to take care of missing values
+imputer = sklearn.preprocessing.Imputer(strategy="median")
+housing_num = housing.drop("ocean_proximity", axis=1)
+imputer.fit(housing_num)
+X = imputer.transform(housing_num)
+housing_tr = pd.DataFrame(X, columns=housing_num.columns)
+print(housing_tr.iloc[21:24])
+
+# statistics_ : array of shape (n_features,)
+# The imputation fill value for each feature if axis == 0.
+print(imputer.statistics_)
+# Compare to below
+print(housing_num.median().values)
+
+housing_tr.head()
+
+# Handling Text and Categorical Attributes
+# Convert text Label into numbers with sklearn.preprocessing.LabelEncoder
+# 0 represent <1H OCEAN, 1 represents INLAND etc
+encoder = sklearn.preprocessing.LabelEncoder()
+housing_cat = housing["ocean_proximity"]
+housing_cat_encoded = encoder.fit_transform(housing_cat)
+print(housing_cat_encoded)
+# compare with below
+print(housing_cat)
+
