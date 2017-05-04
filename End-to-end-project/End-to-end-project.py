@@ -14,6 +14,7 @@ import pandas as pd
 import hashlib
 import sklearn.model_selection
 import matplotlib.image as mpimg
+import pandas.tools.plotting
 
 rnd.seed(42)  # to make this script's output stable across runs
 
@@ -254,3 +255,13 @@ corr_matrix["median_house_value"].sort_values(ascending=False)
 housing.plot(kind='scatter', x='median_income', y='median_house_value', alpha=0.3)
 plt.axis([0, 16, 0, 550000])
 save_fig("income_vs_house_value_scatterplot")
+
+
+# Pandas Scatter Matrix
+# which plots every numerical attribute against every other numerical attribute.
+attributes = ["median_house_value", "median_income", "total_rooms",
+              "housing_median_age"
+              ]
+pandas.tools.plotting.scatter_matrix(housing[attributes], figsize=(11, 8))
+save_fig("scatter_matrix_plot")
+
