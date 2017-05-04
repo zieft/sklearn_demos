@@ -251,11 +251,9 @@ corr_matrix = housing.corr()
 # how much each attribute correlates with the median house value
 corr_matrix["median_house_value"].sort_values(ascending=False)
 
-
 housing.plot(kind='scatter', x='median_income', y='median_house_value', alpha=0.3)
 plt.axis([0, 16, 0, 550000])
 save_fig("income_vs_house_value_scatterplot")
-
 
 # Pandas Scatter Matrix
 # which plots every numerical attribute against every other numerical attribute.
@@ -265,3 +263,21 @@ attributes = ["median_house_value", "median_income", "total_rooms",
 pandas.tools.plotting.scatter_matrix(housing[attributes], figsize=(11, 8))
 save_fig("scatter_matrix_plot")
 
+# Experimenting with Attribute Combinations
+housing['rooms_per_household'] = housing["total_rooms"] / housing['population']
+housing['bedrooms_per_room'] = housing['total_bedrooms'] / housing['total_rooms']
+housing['population_per_household'] = housing['population'] / housing['households']
+
+corr_matrix = housing.corr()
+corr_matrix["median_house_value"].sort_values(ascending=False)
+
+housing.plot(kind="scatter", x="rooms_per_household", y="median_house_value",
+             alpha=0.2
+             )
+plt.axis([0, 5, 0, 520000])
+save_fig('rooms_per_household')
+
+housing.describe()
+
+
+# Prepare the data for Machine Learning algorithms
