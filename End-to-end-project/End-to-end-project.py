@@ -15,7 +15,7 @@ import hashlib
 import sklearn.model_selection
 import matplotlib.image as mpimg
 
-rnd.seed(42)  # to make this notebook's output stable across runs
+rnd.seed(42)  # to make this script's output stable across runs
 
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['xtick.labelsize'] = 12
@@ -99,6 +99,7 @@ save_fig('attribute_histogram_plots')
 def split_train_test(data, test_ratio):
     """
     Split dataset into two parts. One for testing and the other for training.
+    Disadvantage: Each time run this function will generate complete different test-set.
     :param data: the pandas DataFrame
     :param test_ratio: The ratio that the size of test set over the whole dataset.
     :return: Purely integer-location based indexing for selection by position.
@@ -169,7 +170,7 @@ housing["income_cat"].value_counts()
 
 # Stratified ShuffleSplit cross-validator
 # Provides train/test indices to split data in train/test sets.
-# stratified sampling based on the income category
+# stratified sampling(按权重比例取样) based on the income category
 split = sklearn.model_selection.StratifiedShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 for train_index, test_index in split.split(housing, housing["income_cat"]):
     strat_train_set = housing.loc[train_index]  # loc: Purely label-location based indexer for selection by label.
@@ -235,10 +236,21 @@ plt.xlabel("Longitude", fontsize=14)
 prices = housing["median_house_value"]
 tick_values = np.linspace(prices.min(), prices.max(), 11)
 cbar = plt.colorbar()
-cbar.ax.set_yticklabels(["$%dk"%(round(v/1000)) for v in tick_values], fontsize=14)
+cbar.ax.set_yticklabels(["$%dk" % (round(v / 1000)) for v in tick_values], fontsize=14)
 cbar.set_label('Median House Value', fontsize=16)
 
 plt.legend(fontsize=16)
 save_fig("california_housing_prices_plot")
 
-#
+# Looking for Correlations
+# compute the standard correlation coefficient (also called Pearson’s r)
+# between every pair of attributes using the corr() method
+corr_matrix = housing.corr()
+
+# how much each attribute correlates with the median house value
+corr_matrix["median_house_value"].sort_values(ascending=False)
+
+
+housing.plot(kind='scatter', x='median_income', y='median_house_value', alpha=0.3)
+plt.axis([0, 16, 0, 550000])
+save_fig("income_vs_house_value_scatterplot")
