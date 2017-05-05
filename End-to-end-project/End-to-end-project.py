@@ -373,7 +373,8 @@ housing_extra_attribs = pd.DataFrame(housing_extra_attribs,
                                                                       "population_per_household"])
 housing_extra_attribs.head()
 
-# Feature Scaling
+# Transformation Pipelines
+# A numerical Pipeline
 num_pipeline = sklearn.pipeline.Pipeline([
     ("imputer", sklearn.preprocessing.Imputer(strategy="median")),
     ("attribs_adder", CombinedAttributesAdder()),
@@ -381,3 +382,45 @@ num_pipeline = sklearn.pipeline.Pipeline([
 ])
 
 num_pipeline.fit_transform(housing_num)
+
+
+# A full Pipeline includes numerical and categorical values
+# Before that we define a selector transformer: it simply transforms the
+# data by selecting the desired attributes (numerical or categorical),
+# dropping the rest, and converting the resulting DataFrame to a NumPy array.
+
+class DataFrameSelector(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin):
+    def __init__(self, attribute_names):
+        self.attribute_names = attribute_names
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X):
+        return X[self.attribute_names].values
+
+
+num_attribs = list(housing_num)
+cat_attribs = ["ocean_proximity"]
+
+num_pipeline = sklearn.pipeline.Pipeline([
+    ('selector', DataFrameSelector(num_attribs)),
+    ('imputer', sklearn.preprocessing.Imputer(strategy="median")),
+    ('attribs_adder', CombinedAttributesAdder()),
+    ('std_scaler', sklearn.preprocessing.StandardScaler()),
+])
+
+cat_pipeline = sklearn.pipeline.Pipeline([
+    ('selector', DataFrameSelector(cat_attribs)),
+    ('label_binarizer', sklearn.preprocessing.LabelBinarizer()),
+])
+
+preparation_pipeline = sklearn.pipeline.FeatureUnion(transformer_list=[
+    ("num_pipeline", num_pipeline),
+    ("cat_pipeline", cat_pipeline),
+])
+
+housing_prepared = preparation_pipeline.fit_transform(housing)
+print(housing_prepared)
+print(housing_prepared.shape)
+
