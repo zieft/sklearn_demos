@@ -18,6 +18,9 @@ import sklearn.preprocessing
 import sklearn.model_selection
 import sklearn.base
 import sklearn.pipeline
+import sklearn.metrics
+import sklearn.tree
+import sklearn.linear_model
 from six.moves import urllib
 
 rnd.seed(42)  # to make this script's output stable across runs
@@ -424,3 +427,33 @@ housing_prepared = preparation_pipeline.fit_transform(housing)
 print(housing_prepared)
 print(housing_prepared.shape)
 
+# Select and Train a Model
+# Linear Regression model
+
+lin_reg = sklearn.linear_model.LinearRegression()
+lin_reg.fit(housing_prepared, housing_labels)
+
+# try the full pipeline on a few training instances
+some_data = housing.iloc[:5]
+some_labels = housing_labels.iloc[:5]
+some_data_prepared = preparation_pipeline.transform(some_data)
+
+print("Predictions:\t", lin_reg.predict(some_data_prepared))
+print("Labels\t\t", list(some_labels))
+
+# measure RMSE and MAE on the whole training set
+housing_predictions = lin_reg.predict(housing_prepared)
+lin_mse = sklearn.metrics.mean_squared_error(housing_labels, housing_predictions)
+lin_rmse = np.sqrt(lin_mse)
+print(lin_rmse)
+lin_mae = sklearn.metrics.mean_absolute_error(housing_labels, housing_predictions)
+print(lin_mae)
+
+# linear regression is not so good in this case, let's try another one,
+# the DecisionTreeRegression
+tree_reg = sklearn.tree.DecisionTreeRegressor()
+tree_reg.fit(housing_prepared, housing_labels)
+
+housing_predictions = tree_reg.predict(housing_prepared)
+tree_rmse = np.sqrt(sklearn.metrics.mean_squared_error(housing_labels, housing_predictions))
+print(tree_rmse)
