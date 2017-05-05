@@ -8,13 +8,17 @@ import numpy.random as rnd
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 import tarfile
-from six.moves import urllib
 import pandas as pd
+import pandas.tools.plotting
 import hashlib
 import sklearn
-import matplotlib.image as mpimg
-import pandas.tools.plotting
+import sklearn.preprocessing
+import sklearn.model_selection
+import sklearn.base
+import sklearn.pipeline
+from six.moves import urllib
 
 rnd.seed(42)  # to make this script's output stable across runs
 
@@ -335,10 +339,45 @@ housing_cat_1hot = encoder.fit_transform(housing_cat_encoded.reshape(-1, 1))
 print(housing_cat_1hot)  # this is a sparse matrix
 print(housing_cat_1hot.toarray())  # convert that matrix into a 2D-array
 
-
 # LabelEncoding and OneHotEncoding can be applied at the same time by using LabelBinarizer
 encoder = sklearn.preprocessing.LabelBinarizer()
-housing_cat_1hot_2=encoder.fit_transform(housing_cat)
+housing_cat_1hot_2 = encoder.fit_transform(housing_cat)
 print(housing_cat_1hot_2)  # But this is already in 2D-array.
 
+# Custom Transformers s. 94
+rooms_ix, bedrooms_ix, population_ix, household_ix = 3, 4, 5, 6
 
+
+class CombinedAttributesAdder(sklearn.base.BaseEstimator, sklearn.base.TransformerMixin):
+    def __init__(self, add_bedrooms_per_room=True):
+        self.add_bedrooms_per_room = add_bedrooms_per_room
+
+    def fit(self, X, y=None):
+        return self
+
+    def transform(self, X, y=None):
+        rooms_per_household = X[:, rooms_ix] / X[:, household_ix]
+        population_per_household = X[:, population_ix] / X[:, household_ix]
+        if self.add_bedrooms_per_room:
+            bedrooms_per_room = X[:, bedrooms_ix] / X[:, rooms_ix]
+            return np.c_[X, rooms_per_household, population_per_household, bedrooms_per_room]
+        else:
+            return np.c_[X, rooms_per_household, population_per_household]
+
+
+attr_adder = CombinedAttributesAdder(add_bedrooms_per_room=False)
+housing_extra_attribs = attr_adder.transform(housing.values)
+
+housing_extra_attribs = pd.DataFrame(housing_extra_attribs,
+                                     columns=list(housing.columns) + ["rooms_per_household",
+                                                                      "population_per_household"])
+housing_extra_attribs.head()
+
+# Feature Scaling
+num_pipeline = sklearn.pipeline.Pipeline([
+    ("imputer", sklearn.preprocessing.Imputer(strategy="median")),
+    ("attribs_adder", CombinedAttributesAdder()),
+    ("std_scaler", sklearn.preprocessing.StandardScaler()),
+])
+
+num_pipeline.fit_transform(housing_num)
