@@ -5,6 +5,8 @@ from __future__ import division, print_function, unicode_literals
 
 import numpy as np
 import numpy.random as rnd
+import scipy as sp
+import scipy.stats
 import os
 import time
 import matplotlib
@@ -522,3 +524,65 @@ print("It takes {} sec to solve.".format(t2 - t1))
 svm_mse = sklearn.metrics.mean_squared_error(housing_labels, housing_predictions)
 svm_rmse = np.sqrt(svm_mse)
 print(svm_rmse)
+
+# Fine-Tune The Model
+# Grid Search
+# searches for the best combination of hyperparameter values for the RandomForestRegressor:
+param_grid = [
+    {"n_estimators": [3, 10, 30], "max_features": [2, 4, 6, 8]},
+    {"bootstrap": [False], "n_estimators": [3, 10], "max_features": [2, 3, 4]},
+]
+
+forest_reg = sklearn.ensemble.RandomForestRegressor()
+grid_search = sklearn.model_selection.GridSearchCV(forest_reg, param_grid, cv=5, scoring="neg_mean_squared_error")
+grid_search.fit(housing_prepared, housing_labels)
+
+print(grid_search.best_params_)  # Get the best parameters
+print(grid_search.best_estimator_)  # Get the best estimators
+
+# get the evaluation scores
+cvres = grid_search.cv_results_  # is a Dictionary
+for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+    print(np.sqrt(-mean_score), params)
+
+print(pd.DataFrame(grid_search.cv_results_))  # Convert result into DataFrame
+
+# Randomized Search
+t1 = time.time()
+param_distribs = {
+    "n_estimators": scipy.stats.randint(low=1, high=200),
+    "max_features": scipy.stats.randint(low=1, high=8),
+}
+
+forest_reg = sklearn.ensemble.RandomForestRegressor()
+rnd_search = sklearn.model_selection.RandomizedSearchCV(forest_reg, param_distributions=param_distribs,
+                                                        n_iter=10, cv=5, scoring="neg_mean_squared_error")
+rnd_search.fit(housing_prepared, housing_labels)
+t2 = time.time()
+print("This fitting process takes {} sec to complete.".format(t2 - t1))
+
+cvres = rnd_search.cv_results_
+for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
+    print(np.sqrt(-mean_score), params)
+
+# ???
+feature_importances = grid_search.best_estimator_.feature_importances_
+print(feature_importances)
+
+extra_attribs = ["rooms_per_household", "population_per_household", "bedrooms_per_room"]
+cat_one_hot_attribs = list(encoder.classes_)
+attributes = num_attribs + extra_attribs + cat_one_hot_attribs
+print(sorted(zip(feature_importances, attributes), reverse=True))
+
+final_model = grid_search.best_estimator_
+
+X_test = strat_test_set.drop("median_house_value", axis=1)
+y_test = strat_test_set["median_house_value"].copy()
+
+X_test_transformed = preparation_pipeline.transform(X_test)
+final_predictions = final_model.predict(X_test_transformed)
+
+final_mse = sklearn.metrics.mean_squared_error(y_test, final_predictions)
+final_rmse = np.sqrt(final_mse)
+print(final_rmse)
+
