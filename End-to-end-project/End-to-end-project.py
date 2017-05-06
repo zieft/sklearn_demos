@@ -6,6 +6,7 @@ from __future__ import division, print_function, unicode_literals
 import numpy as np
 import numpy.random as rnd
 import os
+import time
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
@@ -21,6 +22,7 @@ import sklearn.pipeline
 import sklearn.metrics
 import sklearn.tree
 import sklearn.linear_model
+import sklearn.ensemble
 from six.moves import urllib
 
 rnd.seed(42)  # to make this script's output stable across runs
@@ -457,3 +459,53 @@ tree_reg.fit(housing_prepared, housing_labels)
 housing_predictions = tree_reg.predict(housing_prepared)
 tree_rmse = np.sqrt(sklearn.metrics.mean_squared_error(housing_labels, housing_predictions))
 print(tree_rmse)
+
+# Better Evaluation Using Cross-Validation
+# K-fold cross-validation
+tree_scores = sklearn.model_selection.cross_val_score(tree_reg, housing_prepared,
+                                                      housing_labels,
+                                                      scoring="neg_mean_squared_error",
+                                                      cv=10
+                                                      )
+tree_rmse_scores = np.sqrt(-tree_scores)
+
+
+def display_scores(scores):
+    print("Scores:", scores)
+    print("Mean:", scores.mean())
+    print("Standard deviation:", scores.std())
+
+
+display_scores(tree_rmse_scores)
+
+lin_scores = sklearn.model_selection.cross_val_score(lin_reg, housing_prepared, housing_labels,
+                                                     scoring="neg_mean_squared_error", cv=10
+                                                     )
+lin_rmse_scores = np.sqrt(-lin_scores)
+display_scores(lin_rmse_scores)
+"""
+the Decision Tree model is overfitting so badly that it performs worse than the 
+Linear Regression model.
+"""
+
+# RandomForestRegression
+forest_reg = sklearn.ensemble.RandomForestRegressor()
+forest_reg.fit(housing_prepared, housing_labels)
+housing_predictions = forest_reg.predict(housing_prepared)
+
+forest_mse = sklearn.metrics.mean_squared_error(housing_labels, housing_predictions)
+forest_rmse = np.sqrt(forest_mse)
+print(forest_rmse)
+
+t1 = time.time()
+forest_scores = sklearn.model_selection.cross_val_score(forest_reg, housing_prepared, housing_labels,
+                                                        scoring="neg_mean_squared_error", cv=10
+                                                        )
+forest_rmse_scores = np.sqrt(-forest_scores)
+display_scores(forest_rmse_scores)
+t2 = time.time()
+print("It takes {} sec to get this result.".format(t2 - t1))
+
+scores = sklearn.model_selection.cross_val_score(lin_reg, housing_prepared, housing_labels, scoring="neg_mean_squared_error", cv=10)
+print(pd.Series(np.sqrt(-scores)).describe())
+
