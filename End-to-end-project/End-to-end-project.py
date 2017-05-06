@@ -23,6 +23,7 @@ import sklearn.metrics
 import sklearn.tree
 import sklearn.linear_model
 import sklearn.ensemble
+import sklearn.svm
 from six.moves import urllib
 
 rnd.seed(42)  # to make this script's output stable across runs
@@ -506,6 +507,18 @@ display_scores(forest_rmse_scores)
 t2 = time.time()
 print("It takes {} sec to get this result.".format(t2 - t1))
 
-scores = sklearn.model_selection.cross_val_score(lin_reg, housing_prepared, housing_labels, scoring="neg_mean_squared_error", cv=10)
+scores = sklearn.model_selection.cross_val_score(lin_reg, housing_prepared, housing_labels,
+                                                 scoring="neg_mean_squared_error", cv=10)
 print(pd.Series(np.sqrt(-scores)).describe())
 
+# Support vector machine
+t1 = time.time()
+svm_reg = sklearn.svm.SVR(kernel="linear")
+svm_reg.fit(housing_prepared, housing_labels)
+housing_predictions = svm_reg.predict(housing_prepared)
+t2 = time.time()
+print("It takes {} sec to solve.".format(t2 - t1))
+
+svm_mse = sklearn.metrics.mean_squared_error(housing_labels, housing_predictions)
+svm_rmse = np.sqrt(svm_mse)
+print(svm_rmse)
