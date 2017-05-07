@@ -565,7 +565,7 @@ cvres = rnd_search.cv_results_
 for mean_score, params in zip(cvres["mean_test_score"], cvres["params"]):
     print(np.sqrt(-mean_score), params)
 
-# ???
+# Analyze the Best Models and Their Errors
 feature_importances = grid_search.best_estimator_.feature_importances_
 print(feature_importances)
 
@@ -574,8 +574,9 @@ cat_one_hot_attribs = list(encoder.classes_)
 attributes = num_attribs + extra_attribs + cat_one_hot_attribs
 print(sorted(zip(feature_importances, attributes), reverse=True))
 
-final_model = grid_search.best_estimator_
 
+# Evaluate the System on the Test Set
+final_model = grid_search.best_estimator_
 X_test = strat_test_set.drop("median_house_value", axis=1)
 y_test = strat_test_set["median_house_value"].copy()
 
@@ -585,4 +586,3 @@ final_predictions = final_model.predict(X_test_transformed)
 final_mse = sklearn.metrics.mean_squared_error(y_test, final_predictions)
 final_rmse = np.sqrt(final_mse)
 print(final_rmse)
-
