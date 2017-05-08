@@ -10,6 +10,8 @@ import sklearn.datasets
 import sklearn.linear_model
 import sklearn.model_selection
 import sklearn.base
+import sklearn.metrics
+
 
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
@@ -143,7 +145,7 @@ for train_index, test_index in skfolds.split(X_train, y_train_5):
     clone_clf.fit(X_train_folds, y_train_folds)
     y_pred = clone_clf.predict(X_test_fold)
     n_correct = sum(y_pred == y_test_fold)
-    print(n_correct / len(y_pred))
+    print(n_correct / len(y_pred))  # End
 
 # The Effect of a Skewed datasets
 class Never5Classfier(sklearn.base.BaseEstimator):
@@ -155,3 +157,27 @@ class Never5Classfier(sklearn.base.BaseEstimator):
 never_5_clf = Never5Classfier()
 print(sklearn.model_selection.cross_val_score(never_5_clf, X_train, y_train_5, cv=3,
                                               scoring="accuracy"))
+
+# Confusion Matrix
+# to have a set of predictions, so they can be compared to the actual targets-
+y_train_pred = sklearn.model_selection.cross_val_predict(sgd_clf, X_train, y_train_5, cv=3)
+"""
+Just like the cross_val_score() function, cross_val_predict() performs 
+K-fold cross-validation, but instead of returning the evaluation scores, 
+it returns the predictions made on each test fold. This means that you 
+get a clean prediction for each instance in the training set
+"""
+
+print(sklearn.metrics.confusion_matrix(y_train_5, y_train_pred))
+"""
+[[47700  6879]  Each row represents an actual class
+ [  889  4532]]  Each column represents a predicted class
+47700 correctly classified as non-5s (true negative)
+6879 wrongly classified as 5s (false positive)
+889 wrongly classified as non-5s (false negative)
+4532 correctly classified as 5s (true positive)
+"""
+# Let's see how a confusion Matrix looks like when the classifier has a 100% accuracy:
+y_train_perfect_prediction = y_train_5
+print(sklearn.metrics.confusion_matrix(y_train_5, y_train_perfect_prediction))
+
