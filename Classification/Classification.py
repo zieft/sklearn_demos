@@ -49,13 +49,55 @@ except six.moves.urllib.error.HTTPError as ex:
 X, y = mnist["data"], mnist["target"]
 print(X.shape)
 
+
 def plot_digit(data):
     image = data.reshape(28, 28)
     plt.imshow(image, cmap=matplotlib.cm.binary, interpolation="nearest")
     plt.axis("off")
 
+
 some_digit_index = 36000
-some_digit = X[some_digit_inde:x]
+some_digit = X[some_digit_index]
 plot_digit(some_digit)
 save_fig("example")
+
+
+def plot_digits(instances, images_per_row=10, **options):
+    """
+    more digits plot
+    :param instances: 
+    :param images_per_row: 
+    :param options: 
+    :return: see file "more_digits_plot.png"
+    :key: np.concatenate() Join a sequence of arrays along an existing axis.
+    """
+    size = 28
+    images_per_row = min(len(instances), images_per_row)
+    images = [instance.reshape(size, size) for instance in instances]
+    n_rows = (len(instances) - 1) // images_per_row + 1
+    row_images = []
+    n_empty = n_rows * images_per_row - len(instances)
+    images.append(np.zeros((size, size * n_empty)))
+    for row in range(n_rows):
+        rimages = images[row * images_per_row:(row + 1) * images_per_row]
+        row_images.append(np.concatenate(rimages, axis=1))
+    image = np.concatenate(row_images, axis=0)
+    plt.imshow(image, cmap=matplotlib.cm.binary, **options)
+    plt.axis("off")
+
+
+plt.figure(figsize=(9, 9))
+example_images = np.r_[X[:12000:600], X[13000:30600:600], X[30600:60000:590]]  # ??
+plot_digits(example_images, images_per_row=10)
+save_fig("more_digits_plot")
+
+# Since MNIST dataset has been already separated into training set and test set
+X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:]
+shuffle_index = rnd.permutation(60000)  # this will guarantee that all cross-validation folds will be similar
+X_train, y_trian = X_train[shuffle_index], y_train[shuffle_index]
+"""
+permutation(x):
+Randomly permute a sequence, or return a permuted range.
+"""
+
 
