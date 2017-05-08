@@ -5,8 +5,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm
 import six.moves
-import sklearn.datasets
 import scipy.io
+import sklearn.datasets
+import sklearn.linear_model
+import sklearn.model_selection
+import sklearn.base
 
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
@@ -100,4 +103,55 @@ permutation(x):
 Randomly permute a sequence, or return a permuted range.
 """
 
+# Training a Binary Classifier
+# Simplified problem: To classify 5 and not 5.
+y_train_5 = (y_train == 5)
+y_test_5 = (y_test == 5)
 
+# Using Stochastic Gradient Descent classfier to train
+sgd_clf = sklearn.linear_model.SGDClassifier(random_state=42)
+sgd_clf.fit(X_train, y_train_5)
+
+# Using sgd_clf to detect images of the number 5:
+sgd_clf.predict([some_digit])  # some_digit外的方括号的作用是什么？
+
+# Performance Measures
+# Measuring Accuracy Using Cross-Validation
+sklearn.model_selection.cross_val_score(sgd_clf, X_train, y_train_5, cv=3,
+                                        scoring="accuracy")
+
+# Implementing Cross-Validation
+# The following code does the same thing as the sklearn...cross_val_score() does.
+skfolds = sklearn.model_selection.StratifiedKFold(n_splits=3, random_state=42)
+"""
+ |  Stratified K-Folds cross-validator
+ |  
+ |  Provides train/test indices to split data in train/test sets.
+ |  
+ |  This cross-validation object is a variation of KFold that returns
+ |  stratified folds. The folds are made by preserving the percentage of
+ |  samples for each class.
+"""
+
+for train_index, test_index in skfolds.split(X_train, y_train_5):
+    clone_clf = sklearn.base.clone(sgd_clf)
+    X_train_folds = X_train[train_index]
+    y_train_folds = (y_train_5[train_index])  # 为什么加括号？
+    X_test_fold = X_train[test_index]
+    y_test_fold = (y_train_5[test_index])
+
+    clone_clf.fit(X_train_folds, y_train_folds)
+    y_pred = clone_clf.predict(X_test_fold)
+    n_correct = sum(y_pred == y_test_fold)
+    print(n_correct / len(y_pred))
+
+# The Effect of a Skewed datasets
+class Never5Classfier(sklearn.base.BaseEstimator):
+    def fit(self, X, y=None):
+        pass
+    def predict(self, X):
+        return np.zeros((len(X), 1), dtype=bool)
+
+never_5_clf = Never5Classfier()
+print(sklearn.model_selection.cross_val_score(never_5_clf, X_train, y_train_5, cv=3,
+                                              scoring="accuracy"))
