@@ -35,15 +35,14 @@ plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
 
 PROJECT_ROOT_DIR = os.getcwd()
-CHAPTER_ID = "end_to_end_project"
 
 
 def save_fig(fig_id, tight_layout=True):
     """
-    
+
     :param fig_id: must be a String
     :param tight_layout: Automatically adjust subplot parameters to give specified padding.
-    :return: 
+    :return:
     """
     assert isinstance(fig_id, str), 'Must be a string.'
     if not os.path.exists(os.path.join(PROJECT_ROOT_DIR, 'images')):
@@ -66,8 +65,8 @@ def fetch_housing_data(housing_url=HOUSING_URL, housing_path=HOUSING_PATH):
     """
     Make a new dir named housing and download housing.tgz from housing_url,
     Extract the tgz file into a csv file.
-    :param housing_url: 
-    :param housing_path: 
+    :param housing_url:
+    :param housing_path:
     :return: housing directory with housing.csv and housing.tgz
     """
     if not os.path.exists(housing_path):
@@ -84,7 +83,7 @@ fetch_housing_data()
 def load_housing_data(housing_path=HOUSING_PATH):
     """
     data loader for csv file.
-    :param housing_path: 
+    :param housing_path:
     :return: a pd DataFrame, use .info() to see the details
     """
     csv_path = os.path.join(housing_path, 'housing.csv')
@@ -132,13 +131,13 @@ print(len(train_set_1), len(test_set_1))
 def test_set_check(identifier, test_ratio, hash):
     """
     ????????????????????????????????????????????????????????????????
-    compute a hash of each instance’s identifier, keep only the last byte 
+    compute a hash of each instance’s identifier, keep only the last byte
     of the hash, and put the instance in the test set if this value is lower
     or equal to 51 (~20% of 256).
-    :param identifier: 
-    :param test_ratio: 
-    :param hash: 
-    :return: 
+    :param identifier:
+    :param test_ratio:
+    :param hash:
+    :return:
     """
     return bytearray(hash(np.int64(identifier)).digest())[-1] < 256 * test_ratio
 
@@ -146,14 +145,14 @@ def test_set_check(identifier, test_ratio, hash):
 def split_train_test_by_id(data, test_ratio, id_column, hash=hashlib.md5):
     """
     ????????????????????????????????????????????????????????????????
-    This ensures that the test set will remain consistent across multiple runs, 
-    even if you refresh the dataset. The new test set will contain 20% of the 
-    new instances, but it will not contain any instance that was previously in 
+    This ensures that the test set will remain consistent across multiple runs,
+    even if you refresh the dataset. The new test set will contain 20% of the
+    new instances, but it will not contain any instance that was previously in
     the training set.
-    :param data: 
-    :param test_ratio: 
+    :param data:
+    :param test_ratio:
     :param hash: 'index'
-    :return: 
+    :return:
     """
     ids = data[id_column]
     in_test_set = ids.apply(lambda id_: test_set_check(id_, test_ratio, hash))
@@ -227,9 +226,9 @@ housing.plot(kind='scatter', x="longitude", y="latitude",
              )
 """
 DataFrame plotting accessor and method (housing.plot())
-The radius of each circle represents the district’s population (option s), 
-and the color represents the price (option c). We will use a predefined color 
-map (option cmap) called jet, which ranges from blue (low values) to red 
+The radius of each circle represents the district’s population (option s),
+and the color represents the price (option c). We will use a predefined color
+map (option cmap) called jet, which ranges from blue (low values) to red
 (high prices).
 """
 plt.legend()  # Places a legend on the axes.
@@ -487,7 +486,7 @@ lin_scores = sklearn.model_selection.cross_val_score(lin_reg, housing_prepared, 
 lin_rmse_scores = np.sqrt(-lin_scores)
 display_scores(lin_rmse_scores)
 """
-the Decision Tree model is overfitting so badly that it performs worse than the 
+the Decision Tree model is overfitting so badly that it performs worse than the
 Linear Regression model.
 """
 

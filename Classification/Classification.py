@@ -3,6 +3,7 @@ import numpy.random as rnd
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.cm
 import six.moves
 import sklearn.datasets
 import scipy.io
@@ -15,6 +16,9 @@ PROJECT_ROOT_DIR = os.getcwd()
 
 
 def save_fig(fig_id, tight_layout=True):
+    assert isinstance(fig_id, str), "Must be a string."
+    if not os.path.exists(os.path.join(PROJECT_ROOT_DIR, "images")):
+        os.makedirs(os.path.join(PROJECT_ROOT_DIR, "images"))
     path = os.path.join(PROJECT_ROOT_DIR, "images", fig_id + ".png")
     print("Saving figure", fig_id)
     if tight_layout:
@@ -41,3 +45,17 @@ except six.moves.urllib.error.HTTPError as ex:
         "DESCR": "mldata.org dataset: mnist-original",
     }
     print("Success!")
+
+X, y = mnist["data"], mnist["target"]
+print(X.shape)
+
+def plot_digit(data):
+    image = data.reshape(28, 28)
+    plt.imshow(image, cmap=matplotlib.cm.binary, interpolation="nearest")
+    plt.axis("off")
+
+some_digit_index = 36000
+some_digit = X[some_digit_inde:x]
+plot_digit(some_digit)
+save_fig("example")
+
