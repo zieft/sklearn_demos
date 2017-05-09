@@ -11,6 +11,7 @@ import sklearn.linear_model
 import sklearn.model_selection
 import sklearn.base
 import sklearn.metrics
+import sklearn.ensemble
 
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
@@ -98,7 +99,7 @@ save_fig("more_digits_plot")
 # Since MNIST dataset has been already separated into training set and test set
 X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:]
 shuffle_index = rnd.permutation(60000)  # this will guarantee that all cross-validation folds will be similar
-X_train, y_trian = X_train[shuffle_index], y_train[shuffle_index]
+X_train, y_train = X_train[shuffle_index], y_train[shuffle_index]
 """
 permutation(x):
 Randomly permute a sequence, or return a permuted range.
@@ -180,8 +181,8 @@ print(sklearn.metrics.confusion_matrix(y_train_5, y_train_pred))
 4532 correctly classified as 5s (true positive)
 """
 # Let's see how a confusion Matrix looks like when the classifier has a 100% accuracy:
-y_train_perfect_prediction = y_train_5
-print(sklearn.metrics.confusion_matrix(y_train_5, y_train_perfect_prediction))
+# y_train_perfect_prediction = y_train_5
+# print(sklearn.metrics.confusion_matrix(y_train_5, y_train_perfect_prediction))
 
 # Precision and Recall
 sklearn.metrics.precision_score(y_train_5, y_train_pred)  # precision = TP/(TP+FP)
@@ -237,7 +238,7 @@ fpr, tpr, thresholds = sklearn.metrics.roc_curve(y_train_5, y_scores)
 
 def plot_roc_curve(fpr, tpr, label=None):
     """
-    plot the FPR aganst the TPR using Matplotlib.
+    plot the FPR against the TPR using Matplotlib.
     :param fpr: 
     :param tpr: 
     :param label: 
@@ -249,5 +250,18 @@ def plot_roc_curve(fpr, tpr, label=None):
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
 
+
 plot_roc_curve(fpr, tpr)
 save_fig("False_Positive_Rate")
+# Try a ForestClassifier
+forest_clf = sklearn.ensemble.RandomForestClassifier(random_state=42)
+y_probas_forest = sklearn.model_selection.cross_val_predict(forest_clf, X_train, y_train_5, cv=3,
+                                                            method="predict_proba")
+y_scores_forest = y_probas_forest[:, 1]  # score = proba of positive class
+fpr_forest, tpr_forest, thresholds_forest = sklearn.metrics.roc_curve(y_train_5, y_scores_forest)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr, tpr, "b:", linewidth=2, label="Random Forest")
+plt.legend(loc="lower right", fontsize=16)
+save_fig("roc_curve_comparison_plot")
+
