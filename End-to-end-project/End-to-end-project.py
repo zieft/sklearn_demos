@@ -203,6 +203,7 @@ compare_props = pd.DataFrame({
 compare_props["Rand. %error"] = 100 * compare_props["Random"] / compare_props["Overall"] - 100
 compare_props["Strat. %error"] = 100 * compare_props["Stratified"] / compare_props["Overall"] - 100
 print(compare_props)
+# Give a compare to all of those proportions
 
 # remove the income_cat attribute so the data is back to its original state
 for set in (strat_train_set, strat_test_set):

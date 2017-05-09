@@ -12,7 +12,6 @@ import sklearn.model_selection
 import sklearn.base
 import sklearn.metrics
 
-
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
 plt.rcParams["ytick.labelsize"] = 12
@@ -147,12 +146,15 @@ for train_index, test_index in skfolds.split(X_train, y_train_5):
     n_correct = sum(y_pred == y_test_fold)
     print(n_correct / len(y_pred))  # End
 
+
 # The Effect of a Skewed datasets
 class Never5Classfier(sklearn.base.BaseEstimator):
     def fit(self, X, y=None):
         pass
+
     def predict(self, X):
         return np.zeros((len(X), 1), dtype=bool)
+
 
 never_5_clf = Never5Classfier()
 print(sklearn.model_selection.cross_val_score(never_5_clf, X_train, y_train_5, cv=3,
@@ -180,4 +182,52 @@ print(sklearn.metrics.confusion_matrix(y_train_5, y_train_pred))
 # Let's see how a confusion Matrix looks like when the classifier has a 100% accuracy:
 y_train_perfect_prediction = y_train_5
 print(sklearn.metrics.confusion_matrix(y_train_5, y_train_perfect_prediction))
+
+# Precision and Recall
+sklearn.metrics.precision_score(y_train_5, y_train_pred)  # precision = TP/(TP+FP)
+sklearn.metrics.recall_score(y_train_5, y_train_pred)  # recall = TP/(TP+FN)
+sklearn.metrics.f1_score(y_train_5, y_train_pred)  # F1=2*precision*recall/(precision+recall))
+
+# Precision/Recall Tradeoff
+# instead of predict(), decision_function() returns a score for each instance,
+# and predictions can be made based on these scores using any threshold s.126
+
+y_scores = sgd_clf.decision_function([some_digit])
+print(y_scores)
+
+threshold = 0
+y_some_digit_pred = (y_scores > threshold)
+print(y_some_digit_pred)
+
+threshold = 30000  # raising the threshold decreases recal
+y_some_digit_pred = (y_scores > threshold)
+print(y_some_digit_pred)
+
+# How to choose threshold?
+# first get the scores of all instances
+y_scores = sklearn.model_selection.cross_val_predict(sgd_clf, X_train, y_train_5, cv=3,
+                                                     method="decision_function")  # retrun decision scores instead of predictions
+precisions, recalls, thresholds = sklearn.metrics.precision_recall_curve(y_train_5, y_scores)
+
+
+def plot_precision_recall_vs_threshold(precisions, recalls, thresholds):
+    """
+    plot precision and recall as functions of the threshold value using Matplotlib.
+    :param precisions: 
+    :param recalls: 
+    :param thresholds: 
+    :return: 
+    """
+    plt.plot(thresholds, precisions[:-1], "b--", label="Precision")
+    plt.plot(thresholds, recalls[:-1], "g--", label="Recall")
+    plt.xlabel("Threshold")
+    plt.legend(loc="upper left")
+    plt.ylim([0, 1])
+
+
+plt.figure(figsize=(8, 4))
+plot_precision_recall_vs_threshold(precisions, recalls, thresholds)
+plt.xlim([-700000, 700000])
+plt.ylim([0, 1])
+save_fig("precision and recall vs decision threshold")
 
