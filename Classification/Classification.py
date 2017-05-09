@@ -12,6 +12,8 @@ import sklearn.model_selection
 import sklearn.base
 import sklearn.metrics
 import sklearn.ensemble
+import sklearn.multiclass
+import sklearn.preprocessing
 
 plt.rcParams["axes.labelsize"] = 14
 plt.rcParams["xtick.labelsize"] = 12
@@ -265,3 +267,35 @@ plt.plot(fpr, tpr, "b:", linewidth=2, label="Random Forest")
 plt.legend(loc="lower right", fontsize=16)
 save_fig("roc_curve_comparison_plot")
 
+# Multiclass Classification
+sgd_clf.fit(X_train, y_train)
+print(sgd_clf.predict([some_digit]))
+
+some_digit_scores = sgd_clf.decision_function([some_digit])
+print(some_digit_scores)
+
+print(np.argmax([some_digit_scores]))
+
+print(sgd_clf.classes_[5])
+
+# Force to use OvO or OvR
+ovo_clf = sklearn.multiclass.OneVsOneClassifier(sklearn.linear_model.SGDClassifier(random_state=42))
+ovo_clf.fit(X_train, y_train)
+print(ovo_clf.predict([some_digit]))
+print(len(ovo_clf.estimators_))
+
+
+# Training a forestClassifier
+forest_clf.fit(X_train, y_train)
+print(forest_clf.predict([some_digit]))
+
+print(forest_clf.predict_proba([some_digit]))
+
+sklearn.model_selection.cross_val_score(sgd_clf, X_train, y_train, cv=3,
+                                        scoring="accuracy")
+
+# By scaling the Inputs to increase the accuracy
+scaler = sklearn.preprocessing.StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
+print(sklearn.model_selection.cross_val_score(sgd_clf, X_train_scaled, y_train, cv=3,
+                                              scoring="accuracy"))
