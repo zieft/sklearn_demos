@@ -284,7 +284,6 @@ ovo_clf.fit(X_train, y_train)
 print(ovo_clf.predict([some_digit]))
 print(len(ovo_clf.estimators_))
 
-
 # Training a forestClassifier
 forest_clf.fit(X_train, y_train)
 print(forest_clf.predict([some_digit]))
@@ -299,3 +298,62 @@ scaler = sklearn.preprocessing.StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train.astype(np.float64))
 print(sklearn.model_selection.cross_val_score(sgd_clf, X_train_scaled, y_train, cv=3,
                                               scoring="accuracy"))
+
+
+# Error Analysis
+
+# 1 confusion matrix
+y_train_pred = sklearn.model_selection.cross_val_predict(sgd_clf, X_train_scaled, y_train, cv=3)
+conf_mx = sklearn.metrics.confusion_matrix(y_train, y_train_pred)
+print(conf_mx)
+
+def plot_confusion_matrix(matix):
+    """
+    plot the matrix in color and with a color bar.
+    :param matix: 
+    :return: 
+    """
+    fig = plt.figure(figsize=(8,8))
+    ax = fig.add_subplot(111)
+    cax = ax.matshow(conf_mx)
+    fig.colorbar(cax)
+
+plt.matshow(conf_mx, cmap=plt.cm.gray)
+save_fig("confusion_matrix_plot", tight_layout=False)
+
+
+plot_confusion_matrix(conf_mx)
+save_fig("confusion_matrix_plot_color", tight_layout=False)
+
+# Focus the plot on the errors
+#firstly, divide each value in the matrix by the number of images in the corresponding class
+
+row_sums = conf_mx.sum(axis=1, keepdims=True)
+norm_conf_mx = conf_mx / row_sums
+np.fill_diagonal(norm_conf_mx, 0)
+plt.matshow(norm_conf_mx, cmap=plt.cm.gray)
+save_fig("confusion_matrix_errors_plot", tight_layout=False)
+
+
+
+# A example to plot 3s and 5s:
+cl_a, cl_b = 3, 5
+X_aa = X_train[(y_train == cl_a) & (y_train_pred == cl_a)]
+X_ab = X_train[(y_train == cl_a) & (y_train_pred == cl_b)]
+X_ba = X_train[(y_train == cl_b) & (y_train_pred == cl_a)]
+X_bb = X_train[(y_train == cl_b) & (y_train_pred == cl_b)]
+
+plt.figure(figsize=(8,8))
+plt.subplot(221)
+plot_digits(X_aa[:25], images_per_row=5)
+plt.subplot(222)
+plot_digits(X_ab[:25], images_per_row=5)
+plt.subplot(223)
+plot_digits(X_ba[:25], images_per_row=5)
+plt.subplot(224)
+plot_digits(X_bb[:25], images_per_row=5)
+save_fig("error_analysis_digits_plot")
+# example End
+
+
+# Multilabel Classification
