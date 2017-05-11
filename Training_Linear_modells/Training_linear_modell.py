@@ -115,3 +115,46 @@ plt.subplot(133)
 plot_gradient_descent(theta, eta=0.5)
 
 save_fig("gradient_descent_plot")
+
+# Stochastic Gradient Descent
+theta_path_sgd = []
+
+n_iterations = 50
+t0, t1 = 5, 50
+
+theta = rnd.randn(2, 1)
+
+
+def learning_schedule(t):
+    return t0 / (t + t1)
+
+
+m = len(X_b)
+
+for epoch in range(n_iterations):
+    for i in range(m):
+        if epoch == 0 and i < 20:
+            y_predict = X_new_b.dot(theta)
+            style = "b-" if i > 0 else "r--"
+            plt.plot(X_new, y_predict, style)
+        random_index = rnd.randint(m)
+        xi = X_b[random_index:random_index + 1]
+        yi = y[random_index: random_index + 1]
+        gradients = 2 * xi.T.dot(xi.dot(theta) - yi)
+        eta = learning_schedule(epoch * m + i)
+        theta = theta - eta * gradients
+        theta_path_sgd.append(theta)
+
+plt.plot(X, y, 'b.')
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", fontsize=18)
+plt.axis([0, 2, 0, 15])
+save_fig("sgd_plot")
+
+# Usiing sklearn to do the same thing
+sgd_reg = sklearn.linear_model.SGDRegressor()
+sgd_reg.fit(X, y.ravel())
+print(sgd_reg.intercept_, sgd_reg.coef_)
+
+
+# Mini-batch Gradient Descent
