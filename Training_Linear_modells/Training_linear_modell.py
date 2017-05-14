@@ -236,6 +236,27 @@ plt.legend(loc="upper left", fontsize=14)
 plt.axis([-3, 3.0, 10])
 save_fig("quadratic_predictions_plot")
 
+# Compare the performances of different-degree Polynomial Regression model
+for style, width, degree in (('g-', 1, 300), ('b--', 2, 2), ('r-+', 2, 1)):
+    polybig_features = sklearn.preprocessing.PolynomialFeatures(degree=degree, include_bias=False)
+    std_scaler = sklearn.preprocessing.StandardScaler()
+    lin_reg = sklearn.linear_model.LinearRegression()
+    polynomial_regression = sklearn.pipeline.Pipeline([
+        ("poly_features", polybig_features),
+        ("std_scaler", std_scaler),
+        ("lin_reg", lin_reg),
+    ])
+    polynomial_regression.fit(X, y)
+    y_newbig = polynomial_regression.predict(X_new)
+    plt.plot(X_new, y_newbig, style, label=str(degree), linewidth=width)
+
+plt.plot(X, y, 'b.', linewidth=3)
+plt.legend(loc="upper left")
+plt.xlabel("$x_1$", fontsize=18)
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.axis([-3, 3, 0, 10])
+save_fig("high_degree_polynomials_plot")
+
 
 # Learning Curves
 # Define a function that plots the learning curves of a model:
@@ -268,4 +289,81 @@ def plot_learning_curves(model, X, y):
 plot_learning_curves(lin_reg, X, y)
 plt.axis([0, 80, 0, 3])
 save_fig("underfitting_learning_curves_plot")
+
+# Now let's look at the learning curves of a 10th degree polynomial model
+polynomial_regression = sklearn.pipeline.Pipeline(
+    [
+        ("poly_features", sklearn.preprocessing.PolynomialFeatures(degree=10, include_bias=False)),
+        ("sgd_reg", sklearn.linear_model.LinearRegression())
+    ]
+)
+plot_learning_curves(polynomial_regression, X, y)
+plt.axis([0, 80, 0, 3])
+save_fig("learning_curves_plot")
+
+# Regularized Linear Models
+m = 20
+X = 3 * np.random.rand(m, 1)
+y = 1 + 0.5 * X + np.random.randn(m, 1) / 1.5
+X_new = np.linspace(0, 3, 100).reshape(100, 1)
+
+
+def plot_model(model_class, polynomial, alphas, **model_kargs):
+    for alpha, style in zip(alphas, ("b-", "g--", "r:")):
+        model = model_class(alpha, **model_kargs) if alpha > 0 else sklearn.linear_model.LinearRegression()
+        if polynomial:
+            model = sklearn.pipeline.Pipeline(
+                [
+                    ("poly_features", sklearn.preprocessing.PolynomialFeatures(degree=10, include_bias=False)),
+                    ("std_scaler", sklearn.preprocessing.StandardScaler()),
+                    ("regul_reg", model),
+                ]
+            )
+        model.fit(X, y)
+        y_new_regul = model.predict(X_new)
+        linewidth = 2 if alpha > 0 else 1
+        plt.plot(X_new, y_new_regul, style, linewidth=linewidth, label=r"$\alpha = {}$".format(alpha))
+    plt.plot(X, y, 'b.', linewidth=3)
+    plt.legend(loc='upper left', fontsize=15)
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.axis([0, 3, 0, 4])
+
+
+plt.figure(figsize=(8, 4))
+plt.subplot(121)
+plot_model(sklearn.linear_model.Ridge, polynomial=False, alphas=(0, 10, 100))
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.subplot(122)
+plot_model(sklearn.linear_model.Ridge, polynomial=True, alphas=(0, 10 ** -5, 1))
+save_fig("ridge_regression_plot")
+
+# perform Ridge Regression with sklearn using a closed-form solution
+ridge_reg = sklearn.linear_model.Ridge(alpha=1, solver="cholesky")
+ridge_reg.fit(X, y)
+print(ridge_reg.predict([[1.5]]))
+# To compare with the SGD_Reg
+sgd_reg = sklearn.linear_model.SGDRegressor(penalty="l2")
+# "l2" indicates that you want SGD to add a regularization term to
+# the cost function equal to half the square of the ℓ 2 norm of the
+# weight vector: this is simply Ridge Regression.
+sgd_reg.fit(X, y.ravel())  # ravel()的作用是将高维张量直接拍成向量
+print(sgd_reg.predict([[1.5]]))
+
+# Lasso Regression
+plt.figure(figsize=(8, 4))
+plt.subplot(121)
+plot_model(sklearn.linear_model.Lasso, polynomial=False, alphas=(0, 0.1, 1))
+plt.ylabel("$y$", rotation=0, fontsize=18)
+plt.subplot(122)
+plot_model(sklearn.linear_model.Lasso, polynomial=True, alphas=(0, 10 ** -7, 1), tol=1)
+save_fig("lasso_regression_plot")
+
+# small example using the Lasso class
+# Note that an SGDRegressor with penalty="l1" can be used instead.
+lasso_reg = sklearn.linear_model.Lasso(alpha=0.1)
+lasso_reg.fit(X, y)
+print(lasso_reg.predict([[1.5]]))
+
+
+# Elastic Net
 
