@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import sklearn.linear_model
 import sklearn.preprocessing
 import sklearn.pipeline
+import sklearn.base
 
 rnd.seed(42)
 plt.rcParams["axes.labelsize"] = 14
@@ -422,3 +423,26 @@ plt.xlabel("Epoch", fontsize=14)
 plt.ylabel("RMSE", fontsize=14)
 save_fig("early_stopping_plot")
 
+# basic implementation of early stopping:
+sgd_reg = sklearn.linear_model.SGDRegressor(
+    n_iter=1,
+    warm_start=True,
+    penalty=None,
+    learning_rate="constant",
+    eta0=0.0005,
+    random_state=42
+)
+
+minimum_val_error = float("inf")
+best_epoch = None
+best_model = None
+for epoch in range(1000):
+    sgd_reg.fit(X_train_poly_scaled, y_train)  # continues where it left off
+    y_val_predict = sgd_reg.predict(X_val_poly_scaled)
+    val_error = sklearn.metrics.mean_squared_error(y_val_predict, y_val)
+    if val_error < minimum_val_error:
+        minimum_val_error = val_error
+        best_epoch = epoch
+        best_model = sklearn.base.clone(sgd_reg)
+
+print(best_epoch, best_model)
