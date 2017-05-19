@@ -301,7 +301,7 @@ def plot_dataset(X, y, axes):
     :param axes: range of the plot
     :return: 
     """
-    plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs")
+    plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs")  # 绘制所有y=0对应的点
     plt.plot(X[:, 0][y == 1], X[:, 1][y == 1], "g^")
     plt.axis(axes)
     plt.grid(True, which="both")
@@ -310,7 +310,7 @@ def plot_dataset(X, y, axes):
 
 
 plot_dataset(X, y, [-1.5, 2.5, -1, 1.5])
-save_fig("Moons datasets")
+save_fig("Moons_datasets")
 
 # Adding features by creating a Pipeline containing a PolynomialFeatures transformer
 # followed by a StandardScaler and a LinearSVC.
@@ -449,7 +449,7 @@ plt.axis([-0.1, 1.1, -0.1, 1.1])
 save_fig("kernel_method_plot")
 
 x1_example = X1D[3, 0]
-for landmark in (-2,1):
+for landmark in (-2, 1):
     k = gaussian_rbf(np.array([[x1_example]]), np.array([[landmark]]), gamma)
     print("Phi({}, {}) = {}".format(x1_example, landmark, k))
 
@@ -463,7 +463,7 @@ rbf_kernel_svm_clf = sklearn.pipeline.Pipeline(
 rbf_kernel_svm_clf.fit(X, y)
 
 gamma1, gamma2 = 0.1, 5
-C1, C2 =0.001, 1000
+C1, C2 = 0.001, 1000
 hyperparams = (gamma1, C1), (gamma1, C2), (gamma2, C1), (gamma2, C2)
 
 svm_clfs = []
@@ -482,8 +482,103 @@ plt.figure(figsize=(11, 7))
 for i, svm_clf in enumerate(svm_clfs):
     plt.subplot(221 + i)
     plot_predictions(svm_clf, [-1.5, 2.5, -1, 1.5])
-    plot_dataset(X,y,[-1.5,2.5,-1,1.5])
-    gamma, C=hyperparams[i]
+    plot_dataset(X, y, [-1.5, 2.5, -1, 1.5])
+    gamma, C = hyperparams[i]
     plt.title(r"$\gamma = {}, C = {}$".format(gamma, C), fontsize=16)
 
 save_fig("moons_rbf_svc_plot")
+
+# # Regression
+# Linear Regression
+m = 50
+X = 2 * np.random.rand(m, 1)
+y = (4 + 3 * X + np.random.randn(m, 1)).ravel()
+
+svm_reg1 = sklearn.svm.LinearSVR(epsilon=1.5)
+svm_reg2 = sklearn.svm.LinearSVR(epsilon=0.5)
+svm_reg1.fit(X, y)
+svm_reg2.fit(X, y)
+
+
+def find_support_vectors(svm_reg, X, y):
+    """
+    
+    :param svm_reg: An instance of sklearn.svm.SVR(LinearSVR)
+    :param X: Training set
+    :param y: Targets set
+    :return: 
+    """
+    y_pred = svm_reg.predict(X)
+    off_margin = (np.abs(y - y_pred) >= svm_reg.epsilon)
+    return np.argwhere(off_margin)  # argwhere 这个函数不理解
+
+
+svm_reg1.support_ = find_support_vectors(svm_reg1, X, y)
+svm_reg2.support_ = find_support_vectors(svm_reg2, X, y)
+
+eps_x1 = 1
+eps_y_pred = svm_reg1.predict([[eps_x1]])
+
+
+def plot_svm_regression(svm_reg, X, y, axes):
+    """
+    
+    :param svm_reg: 
+    :param X: 
+    :param y: 
+    :param axes: 
+    :return: 
+    """
+    x1s = np.linspace(axes[0], axes[1], 100).reshape(100, 1)
+    y_pred = svm_reg.predict(x1s)
+    plt.plot(x1s, y_pred, "k-", linewidth=2, label=r"$\hat{y}$")
+    plt.plot(x1s, y_pred + svm_reg.epsilon, "k--")
+    plt.plot(x1s, y_pred - svm_reg.epsilon, "k--")
+    plt.scatter(X[svm_reg.support_], y[svm_reg.support_], s=180, facecolors="#FFAAAA")
+    plt.plot(X, y, "bo")
+    plt.xlabel("$x_1$", fontsize=18)
+    plt.legend(loc="upper left", fontsize=18)
+    plt.axis(axes)
+
+
+plt.figure(figsize=(9, 4))
+plt.subplot(121)
+axis_svm_regression = [0, 2, 3, 11]
+plot_svm_regression(svm_reg1, X, y, axis_svm_regression)
+plt.title("$\epsilon = {}$".format(svm_reg1.epsilon), fontsize=18)
+plt.ylabel("$y$", fontsize=18, rotation=0)
+plt.annotate(
+    "",
+    xy=(eps_x1, eps_y_pred),
+    xycoords="data",
+    xytext=(eps_x1, eps_y_pred - svm_reg1.epsilon),
+    textcoords="data",
+    arrowprops={"arrowstyle": "<->", "linewidth": 1.5}
+)
+plt.text(0.91, 5.6, "$\epsilon$", fontsize=20)
+plt.subplot(122)
+plot_svm_regression(svm_reg2, X, y, axis_svm_regression)
+plt.title("$\epsilon = {}$".format(svm_reg2.epsilon), fontsize=18)
+save_fig("svm_regression_plot")
+
+# 2nd-degree polynomial kernel SVR
+m = 100
+X = 2 * np.random.rand(m, 1) - 1
+y = (0.2 + 0.1 * X + 0.5 * X ** 2 + np.random.randn(m, 1) / 10).ravel()
+
+svm_poly_reg1 = sklearn.svm.SVR(kernel="poly", degree=2, C=100, epsilon=0.1)
+svm_poly_reg2 = sklearn.svm.SVR(kernel="poly", degree=2, C=0.01, epsilon=0.1)
+svm_poly_reg1.fit(X, y)
+svm_poly_reg2.fit(X, y)
+
+plt.figure(figsize=(9, 4))
+plt.subplot(121)
+axis_svm_regression_poly = [-1, 1, 0, 1]
+plot_svm_regression(svm_poly_reg1, X, y, axis_svm_regression_poly)
+plt.title("$degree={}, C={}, \epsilon={}$".format(svm_poly_reg1.degree, svm_poly_reg1.C, svm_poly_reg1.epsilon), fontsize=18)
+plt.ylabel("$y$", fontsize=18, rotation=0)
+
+plt.subplot(122)
+plot_svm_regression(svm_poly_reg2, X, y, axis_svm_regression_poly)
+plt.title("$degree={}, C={}, \epsilon={}$".format(svm_poly_reg2.degree, svm_poly_reg2.C, svm_poly_reg2.epsilon), fontsize=18)
+save_fig("svm_with_polynomial_kernel_plot")
