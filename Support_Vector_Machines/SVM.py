@@ -4,11 +4,14 @@ import numpy as np
 import os
 import matplotlib
 import matplotlib.pyplot as plt
+import mpl_toolkits.mplot3d
 import sklearn.svm
 import sklearn.datasets
 import sklearn.preprocessing
 import sklearn.pipeline
-import mpl_toolkits.mplot3d
+import sklearn.linear_model
+import sklearn.preprocessing
+import time
 
 np.random.seed(42)
 PROJECT_ROOT_DIR = os.getcwd()
@@ -220,6 +223,7 @@ print(scaled_svm_clf2.predict([[5.5, 1.7]]))
 # Convert to unscaled parameters
 # 将正则化的数据非正则化的方法
 b1 = svm_clf1.decision_function([-scaler.mean_ / scaler.scale_])
+# decision_function: Distance of the samples X to the separating hyperplane.
 b2 = svm_clf2.decision_function([-scaler.mean_ / scaler.scale_])
 w1 = svm_clf1.coef_[0] / scaler.scale_
 w2 = svm_clf2.coef_[0] / scaler.scale_
@@ -332,13 +336,14 @@ def plot_predictions(clf, axes):
     :param axes: 
     :return: 
     """
-    x0s = np.linspace(axes[0], axes[1], 100)
-    x1s = np.linspace(axes[2], axes[3], 100)
-    x0, x1 = np.meshgrid(x0s, x1s)
-    X = np.c_[x0.ravel(), x1.ravel()]
-    y_pred = clf.predict(X).reshape(x0.shape)
-    y_decision = clf.decision_function(X).reshape(x0.shape)
-    plt.contourf(x0, x1, y_pred, cmap=plt.cm.brg, alpha=0.2)
+    x0s = np.linspace(axes[0], axes[1], 100)  # 按照输入的取值范围生成x0定义域
+    x1s = np.linspace(axes[2], axes[3], 100)  # x1的定义域
+    x0, x1 = np.meshgrid(x0s, x1s)  # x0:第0轴重复100遍，x1:第1轴重复100遍
+    # np.meshgrid() Return coordinate matrices from coordinate vectors.
+    X_ = np.c_[x0.ravel(), x1.ravel()]  # 生成定义范围内的所有的（10000个）点
+    y_pred = clf.predict(X_).reshape(x0.shape)
+    y_decision = clf.decision_function(X_).reshape(x0.shape)
+    plt.contourf(x0, x1, y_pred, cmap=plt.cm.brg, alpha=0.2)  # 绘制等高线图
     plt.contourf(x0, x1, y_decision, cmap=plt.cm.brg, alpha=0.1)
 
 
@@ -635,3 +640,107 @@ plot_3D_decision_function(ax1, w=svm_clf2.coef_[0], b=svm_clf2.intercept_[0])
 
 save_fig("iris_3D_plot")
 
+
+# # Small wight vector results in a large margin
+def plot_2D_decision_function(w, b, ylabel=True, x1_lim=[-3, 3]):
+    """
+    
+    :param w: 
+    :param b: 
+    :param ylabel: 
+    :param x1_lim: 
+    :return: 
+    """
+    x1 = np.linspace(x1_lim[0], x1_lim[1], 200)
+    y = w * x1 + b
+    m = 1 / w
+
+    plt.plot(x1, y)
+    plt.plot(x1_lim, [1, 1], "k:")
+    plt.plot(x1_lim, [-1, -1], "k:")
+    plt.axhline(y=0, color="k")
+    plt.axvline(x=0, color="k")
+    plt.plot([m, m], [0, 1], "k--")
+    plt.plot([-m, -m], [0, -1], "k--")
+    plt.plot([-m, m], [0, 0], "k-o", linewidth=3)
+    plt.axis(x1_lim + [-2, 2])
+    if ylabel:
+        plt.ylabel(r"$w_1 x_1$  ", rotation=0, fontsize=16)
+    plt.title(r"$w_1 = {}$".format(w), fontsize=16)
+
+
+plt.figure(figsize=(12, 3.2))
+plt.subplot(121)
+plot_2D_decision_function(1, 0)
+plt.subplot(122)
+plot_2D_decision_function(0.5, 0, ylabel=False)
+save_fig("small_w_large_margin_plot")
+
+X = iris["data"][:, (2, 3)]
+y = (iris["target"] == 2).astype(np.float64)
+
+svm_clf = sklearn.svm.SVC(kernel="linear", C=1)
+svm_clf.fit(X, y)
+svm_clf.predict([[5.3, 1.3]])
+
+# # Hinge loss
+t = np.linspace(-2, 4, 200)
+h = np.where(1 - t < 0, 0, 1 - t)
+
+plt.figure(figsize=(5, 2.8))
+plt.plot(t, h, "b-", linewidth=2, label="$max(0, 1 - t)$")
+plt.grid(True, which="both")
+plt.axhline(y=0, color="k")
+plt.axvline(x=0, color="k")
+plt.yticks(np.arange(-1, 2.5, 1))
+plt.xlabel("$t$", fontsize=16)
+plt.axis([-2, 4, -1, 2.5])
+plt.legend(loc="upper right", fontsize=16)
+save_fig("hinge_plot")
+
+# # Extra material
+# # Training time
+X, y = sklearn.datasets.make_moons(n_samples=1000, noise=0.4)
+plt.plot(X[:, 0][y == 0], X[:, 1][y == 0], "bs")
+plt.plot(X[:, 0][y == 1], X[:, 1][y == 1], "g^")
+
+tol = 0.1
+tols = []
+times = []
+
+for i in range(10):
+    svm_clf = sklearn.svm.SVC(kernel="poly", gamma=3, C=10, tol=tol, verbose=1)
+    t1 = time.time()
+    svm_clf.fit(X, y)
+    t2 = time.time()
+    times.append(t2 - t1)
+    tols.append(tol)
+    print(i, tol, t2 - t1)
+    tol /= 10
+plt.semilogx(tols, times)
+
+# # Identical linear classifiers
+X, y = sklearn.datasets.make_moons(n_samples=100, noise=0.15, random_state=42)
+
+C = 5
+alpha = 1 / (C * len(X))
+
+sgd_clf = sklearn.linear_model.SGDClassifier(
+    loss="hinge",
+    learning_rate="constant",
+    eta0=0.001,
+    alpha=alpha,
+    n_iter=100000,
+    random_state=42
+)
+svm_clf = sklearn.svm.SVC(kernel="linear", C=C)
+lin_clf = sklearn.svm.LinearSVC(loss="hinge", C=C)
+
+X_scaled = sklearn.preprocessing.StandardScaler().fit_transform(X)
+sgd_clf.fit(X_scaled, y)
+svm_clf.fit(X_scaled, y)
+lin_clf.fit(X_scaled, y)
+
+print("SGDClassifier(alpha={}):     ".format(sgd_clf.alpha), sgd_clf.intercept_, sgd_clf.coef_)
+print("SVC:                   :     ", svm_clf.intercept_, svm_clf.coef_)
+print("LinearSVC              :     ", lin_clf.intercept_, lin_clf.coef_)
