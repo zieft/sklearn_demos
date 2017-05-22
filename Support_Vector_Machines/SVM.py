@@ -390,7 +390,7 @@ save_fig("moons_kernelized_polynomial_svc_plot")
 def gaussian_rbf(x, landmark, gamma):
     """
     Gaussian Radial Basis Function (RBF) Equation 5-1
-    :param x: feature to be transformed
+    :param x: feature to be transformed (must be a vector, using .reshape(-1,1))
     :param landmark: landmark selected at the location of each and every instance in the dataset.
     :param gamma: Increasing gamma makes the bell-shape curve narrower
     :return: new feature with respect with the landmark
@@ -403,6 +403,11 @@ gamma = 0.3
 x1s = np.linspace(-4.5, 4.5, 200).reshape(-1, 1)
 x2s = gaussian_rbf(x1s, -2, gamma)
 x3s = gaussian_rbf(x1s, 1, gamma)
+
+# identical
+# x1s1 = np.linspace(-4.5, 4.5, 200).reshape(1, -1)
+# x2s1 = gaussian_rbf(x1s, -2, gamma)
+# x3s1 = gaussian_rbf(x1s, 1, gamma)
 
 XK = np.c_[gaussian_rbf(X1D, -2, gamma), gaussian_rbf(X1D, 1, gamma)]
 yk = np.array([0, 0, 1, 1, 1, 1, 1, 0, 0])
@@ -420,9 +425,9 @@ plt.plot(x1s, x3s, "b:")
 plt.gca().get_yaxis().set_ticks([0, 0.25, 0.5, 0.75, 1])
 plt.xlabel("$x_1$", fontsize=20)
 plt.ylabel("Similarity", fontsize=14)
-plt.annotate(
+plt.annotate(  # 在图像中加箭头
     "$\mathbf{x}$",
-    xy=(X1D[3, 0], 0),
+    xy=(X1D[3, 0], 0),  # Length 2 sequence specifying the *(x,y)* point to annotate
     xytext=(-0.5, 0.2),
     ha="center",
     arrowprops=dict(facecolor="black", shrink=0.1),
@@ -816,3 +821,52 @@ plt.plot(range(svm_clf.n_epochs), svm_clf.Js)
 plt.axis([0, svm_clf.n_epochs, 0, 100])
 
 print(svm_clf.intercept_, svm_clf.coef_)
+
+svm_clf2 = sklearn.svm.SVC(kernel="linear", C=C)
+svm_clf2.fit(X, y.ravel())
+print(svm_clf2.intercept_, svm_clf2.coef_)
+
+yr = y.ravel()
+plt.figure(figsize=(12, 3.2))
+plt.subplot(121)
+plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^", label="Iris-Virginica")
+plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs", label="Not Iris-Virginica")
+plot_svc_decision_boundary(svm_clf, 4, 6)
+plt.xlabel("Petal length", fontsize=14)
+plt.ylabel("Petal width", fontsize=14)
+plt.title("MyLinearSVC", fontsize=14)
+plt.axis([4, 6, 0.8, 2.8])
+
+plt.subplot(122)
+plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
+plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
+plot_svc_decision_boundary(svm_clf2, 4, 6)
+plt.xlabel("Petal length", fontsize=14)
+plt.title("sklearn.svm.SVC", fontsize=14)
+plt.axis([4, 6, 0.8, 2.8])
+save_fig("mySVC_vs_skSVC")
+
+# Using a SGDClassifier to find support vectors
+
+sgd_clf = sklearn.linear_model.SGDClassifier(loss="hinge", alpha=0.017, n_iter=50, random_state=42)
+sgd_clf.fit(X, y.ravel())
+
+m = len(X)
+t = y * 2 - 1
+X_b = np.c_[np.ones((m, 1)), X]  # add bias input x0=1
+X_b_t = X_b * t
+sgd_theta = np.r_[sgd_clf.intercept_[0], sgd_clf.coef_[0]]
+print(sgd_theta)
+support_vectors_idx = (X_b_t.dot(sgd_theta) < 1).ravel()
+sgd_clf.support_vectors_ = X[support_vectors_idx]
+sgd_clf.C = C
+
+plt.figure(figsize=(5.5, 3.2))
+plt.plot(X[:, 0][yr == 1], X[:, 1][yr == 1], "g^")
+plt.plot(X[:, 0][yr == 0], X[:, 1][yr == 0], "bs")
+plot_svc_decision_boundary(sgd_clf, 4, 6)
+plt.xlabel("Petal length", fontsize=14)
+plt.ylabel("Petal width", fontsize=14)
+plt.title("SGDClassifier", fontsize=14)
+plt.axis([4, 6, 0.8, 2.8])
+save_fig("SGDClassifier_with_support_vectors")
