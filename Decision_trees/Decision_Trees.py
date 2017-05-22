@@ -109,3 +109,81 @@ plt.text(3.2, 1.80, "Depth=1", fontsize=13)
 plt.text(4.05, 0.5, "(Depth=2)", fontsize=11)
 
 save_fig("decision_tree_decision_boundaries_plot")
+
+# # Predicting classes and class probabilities
+print(tree_clf.predict_proba([[5, 1.5]]))
+print(tree_clf.predict([[5, 1.5]]))
+
+# # Sensitivity to training set details
+print(X[(X[:, 1] == X[:, 1][y == 1].max()) & (y == 1)])  # widest Iris-Versicolor flower
+
+not_widest_versicolor = (X[:, 1] != 1.8) | (y == 2)
+X_tweaked = X[not_widest_versicolor]
+y_tweaked = y[not_widest_versicolor]
+
+tree_clf_tweaked = sklearn.tree.DecisionTreeClassifier(max_depth=2, random_state=40)
+tree_clf_tweaked.fit(X_tweaked, y_tweaked)
+
+plt.figure(figsize=(8, 4))
+plot_decision_boundary(tree_clf_tweaked, X_tweaked, y_tweaked, legend=False)
+plt.plot([0, 7.5], [0.8, 0.8], "k-", lw=2)
+plt.plot([0, 7.5], [1.75, 1.75], "k--", lw=2)
+plt.text(1, 0.9, "Depth=0", fontsize=15)
+plt.text(1.0, 1.8, "Depth=1", fontsize=13)
+
+save_fig("decision_tree_instability_plot")
+
+# Test "min_sample_leaf" on moons data set.
+Xm, ym = sklearn.datasets.make_moons(n_samples=100, noise=0.25, random_state=53)
+
+deep_tree_clf1 = sklearn.tree.DecisionTreeClassifier(random_state=42)
+deep_tree_clf2 = sklearn.tree.DecisionTreeClassifier(min_samples_leaf=4, random_state=42)
+deep_tree_clf1.fit(Xm, ym)
+deep_tree_clf2.fit(Xm, ym)
+
+plt.figure(figsize=(11, 4))
+axes = [-1.5, 2.5, -1, 1.5]
+plt.subplot(121)
+plot_decision_boundary(deep_tree_clf1, Xm, ym, axes=axes, iris=False)
+plt.title("No restrictions", fontsize=16)
+
+plt.subplot(122)
+plot_decision_boundary(deep_tree_clf2, Xm, ym, axes=axes, iris=False)
+plt.title("min_samples_leaf = {}".format(deep_tree_clf2.min_samples_leaf), fontsize=14)
+
+save_fig("min_samples_leaf_plot")
+
+# Rotation
+angle = np.pi / 180 * 20
+rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+Xr = X.dot(rotation_matrix)
+
+tree_clf_r = sklearn.tree.DecisionTreeClassifier(random_state=42)
+tree_clf_r.fit(Xr, y)
+
+plt.figure(figsize=(8, 3))
+plot_decision_boundary(tree_clf_r, X, y, axes=[0.5, 7.5, -1.0, 3], iris=False)
+save_fig("rotation_matrix")
+
+# Sensitivity to rotation
+np.random.seed(6)
+Xs = np.random.rand(100, 2) - 0.5
+ys = (Xs[:, 0] > 0).astype(np.float64) * 2
+
+angle = np.pi / 4
+# rotation_matrix = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]])
+Xsr = Xs.dot(rotation_matrix)
+
+tree_clf_s = sklearn.tree.DecisionTreeClassifier(random_state=42)
+tree_clf_s.fit(Xs, ys)
+tree_clf_sr = sklearn.tree.DecisionTreeClassifier(random_state=42)
+tree_clf_sr.fit(Xsr, ys)
+
+plt.figure(figsize=(11, 4))
+axes = [-0.7, 0.7, -0.7, 0.7]
+plt.subplot(121)
+plot_decision_boundary(tree_clf_s, Xs, ys, axes=axes, iris=False)
+plt.subplot(122)
+plot_decision_boundary(tree_clf_sr, Xsr, ys, axes=axes, iris=False)
+
+save_fig("sensitivity_to_rotation_plot")
