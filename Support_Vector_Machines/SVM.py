@@ -476,9 +476,9 @@ rbf_kernel_svm_clf.fit(X, y)
 
 gamma1, gamma2 = 0.1, 5
 C1, C2 = 0.001, 1000
-hyperparams = (gamma1, C1), (gamma1, C2), (gamma2, C1), (gamma2, C2)
+hyperparams = (gamma1, C1), (gamma1, C2), (gamma2, C1), (gamma2, C2)  # tuple of tuples
 
-svm_clfs = []
+svm_clfs = []  # 生成四个参数不同的支持向量机分类器，并训练数据
 for gamma, C in hyperparams:
     rbf_kernel_svm_clf = sklearn.pipeline.Pipeline(
         [
