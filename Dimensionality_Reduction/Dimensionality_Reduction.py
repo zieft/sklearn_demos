@@ -146,3 +146,14 @@ ax.set_ylim(axes[2:4])
 ax.set_zlim(axes[4:6])
 
 save_fig("dataset_3d_plot")
+
+l_1 = 1
+l_2 = 3
+phi = np.linspace(0,2*np.pi, 360)
+psi = np.arcsin(11/12*np.sin(phi))
+
+plt.plot(phi *180/np.pi, psi*180/np.pi)
+plt.grid(True)
+plt.xlabel("Kurbelwinkel phi [ ]")
+plt.ylabel("Koppelwinkel psi [ ]")
+
